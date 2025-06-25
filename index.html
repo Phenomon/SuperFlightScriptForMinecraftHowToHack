@@ -1,1 +1,126 @@
-test
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random String Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 20px 0;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 18px;
+            word-break: break-all;
+            min-height: 20px;
+        }
+        .copy-btn {
+            background-color: #28a745;
+            font-size: 14px;
+            padding: 8px 16px;
+            margin-left: 10px;
+        }
+        .copy-btn:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Your key:</h1>
+        <p>Have fun! :)</p>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function generateString() {
+            try {
+                const response = await fetch('/generate');
+                const data = await response.json();
+                const resultDiv = document.getElementById('result');
+                resultDiv.innerHTML = `
+                    <strong>Your key:</strong><br>
+                    ${data.random_string}
+                    <button class="copy-btn" onclick="copyToClipboard('${data.random_string}')">Copy</button>
+                `;
+                return Promise.resolve();
+            } catch (error) {
+                console.error('Error getting key:', error);
+                document.getElementById('result').innerHTML = 'Error getting key';
+                return Promise.reject(error);
+            }
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(function() {
+                alert('Key copied to clipboard!');
+            }, function(err) {
+                console.error('Could not copy text: ', err);
+            });
+        }
+
+        // Generate initial string on page load
+        window.onload = function() {
+            // Check if this is a refresh (page has been visited before)
+            if (sessionStorage.getItem('visited')) {
+                // This is a refresh - redirect to blank page with timeout
+                document.body.innerHTML = '<div style="text-align: center; margin-top: 50px; font-family: Arial, sans-serif;"><h2>Please wait...</h2><p>You will be able to generate a new key in <span id="countdown">5</span> seconds.</p></div>';
+
+                //Seconds countdown
+                let countdown = 86400;
+                const countdownElement = document.getElementById('countdown');
+                
+                const timer = setInterval(function() {
+                    countdown--;
+                    countdownElement.textContent = countdown;
+                    
+                    if (countdown <= 0) {
+                        clearInterval(timer);
+                        // Reset session storage and reload page to allow new generation
+                        sessionStorage.removeItem('visited');
+                        window.location.reload();
+                    }
+                }, 1000);
+            } else {
+                // First visit - mark as visited and generate string
+                sessionStorage.setItem('visited', 'true');
+                generateString();
+            }
+        };
+    </script>
+</body>
+</html>
